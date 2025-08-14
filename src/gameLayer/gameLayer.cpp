@@ -14,19 +14,25 @@
 #include <imguiTools.h>
 #include <logs.h>
 
+#pragma region Player default values
+	const float PLAYER_SPEED = 200;
+#pragma endregion
+
 struct GameData
 {
-	glm::vec2 rectPos = {100,100};
-
-}gameData;
+	glm::vec2 playerPos = { 100,100 };
+} gameData;
 
 gl2d::Renderer2D renderer;
+gl2d::Texture spaceShipTexture;
 
 bool initGame()
 {
 	//initializing stuff for the renderer
 	gl2d::init();
 	renderer.create();
+
+	spaceShipTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true);
 
 	//loading the saved data. Loading an entire structure like this makes savind game data very easy.
 	platform::readEntireFile(RESOURCES_PATH "gameData.data", &gameData, sizeof(GameData));
@@ -56,36 +62,55 @@ bool gameLogic(float deltaTime, platform::Input &input)
 	renderer.updateWindowMetrics(w, h);
 #pragma endregion
 
+#pragma region movement
 	//you can also do platform::isButtonHeld(platform::Button::Left)
+	glm::vec2 move = {};
+	if (input.isButtonHeld(platform::Button::Left) || 
+		input.isButtonHeld(platform::Button::A))
+	{
+		move.x = -1;
+		//gameData.playerPos.x -= deltaTime * 100;
+	}
+	if (input.isButtonHeld(platform::Button::Right) ||
+		input.isButtonHeld(platform::Button::D))
+	{
+		move.x = 1;
+		//gameData.playerPos.x += deltaTime * 100;
+	}
+	if (input.isButtonHeld(platform::Button::Up) ||
+		input.isButtonHeld(platform::Button::W))
+	{
+		move.y = -1;
+		//gameData.playerPos.y -= deltaTime * 100;
+	}
+	if (input.isButtonHeld(platform::Button::Down) ||
+		input.isButtonHeld(platform::Button::S))
+	{
+		move.y = 1;
+		//gameData.playerPos.y += deltaTime * 100;
+	}
 
-	if (input.isButtonHeld(platform::Button::Left))
+	if (move.x != 0 || move.y != 0) //Zero check to avoid Division by 0 error
 	{
-		gameData.rectPos.x -= deltaTime * 100;
-	}
-	if (input.isButtonHeld(platform::Button::Right))
-	{
-		gameData.rectPos.x += deltaTime * 100;
-	}
-	if (input.isButtonHeld(platform::Button::Up))
-	{
-		gameData.rectPos.y -= deltaTime * 100;
-	}
-	if (input.isButtonHeld(platform::Button::Down))
-	{
-		gameData.rectPos.y += deltaTime * 100;
+		// Normalize the movement so the diagonal movement is not faster than straight.
+		move = glm::normalize(move);
+		move *= deltaTime * PLAYER_SPEED;
+		gameData.playerPos += move;
 	}
 
-	gameData.rectPos = glm::clamp(gameData.rectPos, glm::vec2{0,0}, glm::vec2{w - 100,h - 100});
-	renderer.renderRectangle({gameData.rectPos, 100, 100}, Colors_Blue);
+#pragma endregion
+
+	gameData.playerPos = glm::clamp(gameData.playerPos, glm::vec2{0,0}, glm::vec2{w - 100,h - 100});
+	renderer.renderRectangle({gameData.playerPos, 100, 100}, spaceShipTexture);
 
 	renderer.flush();
 
-
+#if REMOVE_IMGUI == 0
 	//ImGui::ShowDemoWindow();
 	ImGui::PushMakeWindowNotTransparent();
 	ImGui::Begin("Test Imgui");
 
-	ImGui::DragFloat2("Positions", &gameData.rectPos[0]);
+	ImGui::DragFloat2("Positions", &gameData.playerPos[0]);
 
 	ImGui::Text("Emoji moment: " ICON_FK_AMBULANCE);
 
@@ -103,6 +128,7 @@ bool gameLogic(float deltaTime, platform::Input &input)
 
 	ImGui::PopMakeWindowNotTransparent();
 	ImGui::End();
+#endif
 
 	return true;
 #pragma endregion

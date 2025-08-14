@@ -22,7 +22,9 @@
 #include "errorReporting.h"
 #include <stringManipulation.h>
 
-#define REMOVE_IMGUI 0
+#define DEFAULT_WINDOW_H 980
+#define DEFAULT_WINDOW_W 1024
+#define REMOVE_IMGUI 1
 
 #if REMOVE_IMGUI == 0
 	#include "imgui.h"
@@ -435,9 +437,9 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #endif
 
-
-	int w = 500;
-	int h = 500;
+	// TODO: save this as a sewttings
+	int w = DEFAULT_WINDOW_W;
+	int h = DEFAULT_WINDOW_H;
 	wind = glfwCreateWindow(w, h, "geam", nullptr, nullptr);
 	glfwMakeContextCurrent(wind);
 	glfwSwapInterval(1);
